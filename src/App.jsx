@@ -262,13 +262,77 @@ export default function App() {
         {adminTab === "reviews" && <div className="anim-fade-up">
           {reviews.length===0 && <p style={{ color:"var(--text2)",textAlign:"center",padding:40 }}>Отзывов пока нет</p>}
           {reviews.map((r,idx) => (
-            <div key={r.id} style={{ background:"var(--surface)",borderRadius:"var(--radius-sm)",padding:16,marginBottom:10,display:"flex",gap:12,alignItems:"center",flexWrap:"wrap" }}>
-              <span style={{ color:"var(--text2)",fontSize:13,minWidth:80 }}>{r.name}</span><Stars rating={r.rating} size={14} />
-              <span style={{ color:"var(--text2)",fontSize:12,flex:1 }}>{r.text.slice(0,60)}...</span>
-              <span style={{ color:"#444",fontSize:11 }}>{r.date}</span>
-              <button onClick={() => saveReviews(reviews.filter((_,i)=>i!==idx))} style={{...iconBtnStyle,color:"#f87171"}}>✕</button>
-            </div>
-          ))}
+  <div
+    key={r.id}
+    style={{
+      background:"var(--surface)",
+      borderRadius:"var(--radius-sm)",
+      padding:16,
+      marginBottom:10,
+      display:"flex",
+      flexDirection:"column",
+      gap:12
+    }}
+  >
+
+    <div style={{ display:"flex", gap:12, alignItems:"center", flexWrap:"wrap" }}>
+      <input
+        value={r.name}
+        onChange={e => {
+          const nr = [...reviews];
+          nr[idx] = { ...nr[idx], name: e.target.value };
+          saveReviews(nr);
+        }}
+        style={{ ...inputStyle, maxWidth:180 }}
+        placeholder="Имя"
+      />
+
+      <input
+        type="date"
+        value={r.date}
+        onChange={e => {
+          const nr = [...reviews];
+          nr[idx] = { ...nr[idx], date: e.target.value };
+          saveReviews(nr);
+        }}
+        style={{ ...inputStyle, maxWidth:180 }}
+      />
+
+      <button
+        onClick={() => saveReviews(reviews.filter((_,i)=>i!==idx))}
+        style={{ ...iconBtnStyle, color:"#f87171" }}
+      >
+        ✕
+      </button>
+    </div>
+
+    <textarea
+      value={r.text}
+      onChange={e => {
+        const nr = [...reviews];
+        nr[idx] = { ...nr[idx], text: e.target.value };
+        saveReviews(nr);
+      }}
+      rows={2}
+      style={{ ...inputStyle, resize:"vertical" }}
+    />
+
+    <div style={{ display:"flex", alignItems:"center", gap:10 }}>
+      <span style={{ color:"var(--text2)", fontSize:13 }}>Оценка:</span>
+
+      <Stars
+        rating={r.rating}
+        onRate={(val) => {
+          const nr = [...reviews];
+          nr[idx] = { ...nr[idx], rating: val };
+          saveReviews(nr);
+        }}
+        size={18}
+      />
+    </div>
+
+  </div>
+))}
         </div>}
         {adminTab === "channels" && <div className="anim-fade-up">
           {channels.map((ch,chIdx) => (

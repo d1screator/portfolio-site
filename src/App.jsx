@@ -626,7 +626,7 @@ export default function App() {
         </div>
 
         <div className="anim-fade-up" style={{ animationDelay: ".05s", position: "relative", zIndex: 2 }}>
-          <span className="label-tag">Video Production Studio</span>
+          <span className="label-tag">Видеомонтажер</span>
         </div>
 
         <h1 className="anim-fade-up" style={{

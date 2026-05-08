@@ -66,6 +66,8 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:9999;o
 @keyframes rotate{from{transform:rotate(0)}to{transform:rotate(360deg)}}
 @keyframes gradientShift{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
 @keyframes marquee{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+@keyframes moveOrb1{0%{transform:translate(-10vw, -10vh) scale(1)}50%{transform:translate(5vw, 15vh) scale(1.2)}100%{transform:translate(-10vw, -10vh) scale(1)}}
+@keyframes moveOrb2{0%{transform:translate(5vw, 15vh) scale(1)}50%{transform:translate(-5vw, -5vh) scale(0.9)}100%{transform:translate(5vw, 15vh) scale(1)}}
 .anim-fade-up{animation:fadeUp .7s cubic-bezier(.16,1,.3,1) both}
 .anim-scale-in{animation:scaleIn .65s cubic-bezier(.16,1,.3,1) both}
 .anim-slide-down{animation:slideDown .4s cubic-bezier(.16,1,.3,1) both}
@@ -76,6 +78,7 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:9999;o
 ::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--accent);border-radius:3px}
 input,textarea,select{font-family:'Manrope',sans-serif}
 #scroll-progress{position:fixed;top:0;left:0;height:2px;background:var(--gradient1);background-size:200% 200%;animation:gradientShift 3s ease infinite;z-index:10000;transition:width .1s linear}
+.bg-orb{position:fixed;border-radius:50%;filter:blur(80px);opacity:0.15;pointer-events:none;z-index:0}
 `;
 
 const ScrollProgress = () => {
@@ -172,18 +175,32 @@ export default function App() {
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewText, setReviewText] = useState("");
   const [adminTab, setAdminTab] = useState("works");
+  const [customWorks, setCustomWorks] = useState(null);
+  const [customChannels, setCustomChannels] = useState(null);
 
   useEffect(() => {
     (async () => {
       try {
-        const [r, w, ch, co, sn, lg, sd] = await Promise.all([loadDoc("reviews", DEFAULT_REVIEWS), loadDoc("works", DEFAULT_WORKS), loadDoc("channels", DEFAULT_CHANNELS), loadDoc("contacts", DEFAULT_CONTACTS), loadDoc("siteName", "STUDIO"), loadDoc("logo", ""), loadDoc("siteDescription", DEFAULT_DESCRIPTION)]);
+        const [r, w, ch, co, sn, lg, sd, cw, cc] = await Promise.all([
+          loadDoc("reviews", DEFAULT_REVIEWS),
+          loadDoc("works", DEFAULT_WORKS),
+          loadDoc("channels", DEFAULT_CHANNELS),
+          loadDoc("contacts", DEFAULT_CONTACTS),
+          loadDoc("siteName", "STUDIO"),
+          loadDoc("logo", ""),
+          loadDoc("siteDescription", DEFAULT_DESCRIPTION),
+          loadDoc("customWorks", null),
+          loadDoc("customChannels", null)
+        ]);
         setReviews(r); setWorks(w); setChannels(ch); setContacts(co); setSiteName(sn); setLogoUrl(lg); setSiteDescription(sd);
+        setCustomWorks(cw);
+        setCustomChannels(cc);
       } catch (e) { console.error(e); }
       setLoaded(true);
     })();
   }, []);
   useEffect(() => {
-    const u = [subDoc("reviews", setReviews), subDoc("works", setWorks), subDoc("channels", setChannels), subDoc("contacts", setContacts), subDoc("siteName", setSiteName), subDoc("logo", setLogoUrl), subDoc("siteDescription", setSiteDescription)];
+    const u = [subDoc("reviews", setReviews), subDoc("works", setWorks), subDoc("channels", setChannels), subDoc("contacts", setContacts), subDoc("siteName", setSiteName), subDoc("logo", setLogoUrl), subDoc("siteDescription", setSiteDescription), subDoc("customWorks", setCustomWorks), subDoc("customChannels", setCustomChannels)];
     return () => u.forEach(f => f());
   }, []);
 
@@ -192,7 +209,11 @@ export default function App() {
   const saveChannels = async c => { setChannels(c); await saveDoc("channels", c); };
   const saveContacts = async c => { setContacts(c); await saveDoc("contacts", c); };
   const avgRating = reviews.length ? (reviews.reduce((s, r) => s + r.rating, 0) / reviews.length).toFixed(1) : "0.0";
-  const totalWorks = works.reels.length + works.motion.length + works.youtube.length;
+  const totalWorksComputed = works.reels.length + works.motion.length + works.youtube.length;
+  const totalWorks = customWorks !== null ? Number(customWorks) : totalWorksComputed;
+  const totalChannelsComputed = channels.length;
+  const totalChannels = customChannels !== null ? Number(customChannels) : totalChannelsComputed;
+
   const scrollTo = id => { document.getElementById(id)?.scrollIntoView({ behavior: "smooth" }); };
   const submitReview = async () => {
     if (!reviewName.trim() || !reviewText.trim()) return; setSaving(true);
@@ -203,7 +224,6 @@ export default function App() {
 
   if (!loaded) return (<div style={{ background: "var(--bg)", minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 16 }}><style>{globalStyles}</style><div style={{ width: 44, height: 44, border: "2px solid var(--border)", borderTopColor: "var(--accent)", borderRadius: "50%", animation: "rotate .8s linear infinite" }} /><p style={{ color: "var(--text2)", fontSize: 13, fontFamily: "'Manrope',sans-serif" }}>Загрузка...</p></div>);
 
-  // ─── ADMIN ───────────────────────────────────────────────────────
   if (isAdmin) return (
     <div style={{ background: "var(--bg)", minHeight: "100vh", padding: "30px 20px" }}><style>{globalStyles}</style>
       <div style={{ maxWidth: 960, margin: "0 auto" }}>
@@ -290,20 +310,22 @@ export default function App() {
             <FileUploadBtn accept="image/*" label="Загрузить логотип" onUpload={url => { setLogoUrl(url); saveDoc("logo",url); }} />
             {logoUrl && <div style={{ marginTop:10,display:"flex",alignItems:"center",gap:10 }}><img src={logoUrl} alt="logo" style={{ width:60,height:60,borderRadius:"50%",objectFit:"cover",border:"1px solid var(--border)" }} /><button onClick={() => { setLogoUrl(""); saveDoc("logo",""); }} style={{...iconBtnStyle,color:"#f87171",fontSize:12}}>Удалить</button></div>}
           </div>
+          <div style={{ marginBottom:14 }}><label style={labelStyle}>Отображаемое кол-во работ (пусто — автоматически)</label><input type="number" value={customWorks ?? ""} onChange={e => { const val = e.target.value === "" ? null : e.target.value; setCustomWorks(val); saveDoc("customWorks", val); }} style={inputStyle} placeholder={String(totalWorksComputed)} /></div>
+          <div style={{ marginBottom:14 }}><label style={labelStyle}>Отображаемое кол-во каналов (пусто — автоматически)</label><input type="number" value={customChannels ?? ""} onChange={e => { const val = e.target.value === "" ? null : e.target.value; setCustomChannels(val); saveDoc("customChannels", val); }} style={inputStyle} placeholder={String(totalChannelsComputed)} /></div>
         </div>}
       </div>
     </div>
   );
 
-  // ─── PUBLIC ──────────────────────────────────────────────────────
   const marqueeItems = ["Монтаж видео","Reels & Shorts","YouTube-ролики","Моушн-графика","Цветокоррекция","Звуковой дизайн","Анимация","Шоурилы"];
   return (
     <div style={{ background:"var(--bg)",minHeight:"100vh",position:"relative",overflow:"hidden" }}><style>{globalStyles}</style>
       <ScrollProgress />
+      <div className="bg-orb" style={{ width:"40vw",height:"40vw",maxWidth:600,maxHeight:600,background:"radial-gradient(circle,rgba(124,106,245,.25) 0%,transparent 70%)",top:"10%",left:"-5%",animation:"moveOrb1 16s ease-in-out infinite" }} />
+      <div className="bg-orb" style={{ width:"50vw",height:"50vw",maxWidth:700,maxHeight:700,background:"radial-gradient(circle,rgba(244,114,182,.18) 0%,transparent 70%)",bottom:"5%",right:"-10%",animation:"moveOrb2 18s ease-in-out infinite" }} />
       <div style={{ position:"fixed",top:"-20vh",right:"-15vw",width:"60vw",height:"60vw",maxWidth:700,maxHeight:700,background:"radial-gradient(circle,rgba(124,106,245,.07) 0%,transparent 65%)",pointerEvents:"none",zIndex:0 }} />
       <div style={{ position:"fixed",bottom:"-25vh",left:"-15vw",width:"55vw",height:"55vw",maxWidth:650,maxHeight:650,background:"radial-gradient(circle,rgba(244,114,182,.05) 0%,transparent 65%)",pointerEvents:"none",zIndex:0 }} />
 
-      {/* NAV */}
       <nav style={{ position:"fixed",top:0,left:0,right:0,zIndex:1000,padding:"0 24px",height:60,display:"flex",alignItems:"center",justifyContent:"space-between",background:"rgba(8,8,16,.8)",backdropFilter:"blur(20px)",borderBottom:"1px solid rgba(255,255,255,.04)" }}>
         <div style={{ fontFamily:"'Unbounded',sans-serif",fontSize:15,fontWeight:700,letterSpacing:".05em" }}><span className="gradient-text">{siteName}</span></div>
         <div style={{ display:"flex",gap:4 }}>
@@ -314,7 +336,6 @@ export default function App() {
         <Btn onClick={() => scrollTo("contacts-section")} style={{ padding:"10px 22px",fontSize:12 }}>Заказать</Btn>
       </nav>
 
-      {/* HERO */}
       <section style={{ minHeight:"100vh",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"100px 20px 80px",position:"relative",zIndex:1,textAlign:"center" }}>
         <div className="anim-scale-in" style={{ width:120,height:120,borderRadius:"50%",background:logoUrl?`url(${logoUrl}) center/cover`:"var(--gradient1)",backgroundSize:logoUrl?"cover":"200% 200%",animation:logoUrl?"none":"gradientShift 4s ease infinite",display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 0 80px rgba(124,106,245,.25),0 0 160px rgba(124,106,245,.1)",marginBottom:28,fontSize:logoUrl?0:34,fontFamily:"'Unbounded',sans-serif",fontWeight:800,color:"#fff",flexShrink:0 }}>{!logoUrl && siteName[0]}</div>
         <h1 className="anim-fade-up" style={{ fontFamily:"'Unbounded',sans-serif",fontSize:"clamp(2.4rem,7vw,4.2rem)",fontWeight:900,marginBottom:20,letterSpacing:"-.04em",lineHeight:1,animationDelay:".1s" }}><span className="gradient-text">{siteName}</span></h1>
@@ -332,7 +353,7 @@ export default function App() {
           </div>
           <div style={{ width:1,height:48,background:"var(--border)" }} />
           <div style={{ textAlign:"center" }}>
-            <div style={{ fontSize:28,fontWeight:800,fontFamily:"'Unbounded',sans-serif" }}><AnimCounter target={channels.length} /></div>
+            <div style={{ fontSize:28,fontWeight:800,fontFamily:"'Unbounded',sans-serif" }}><AnimCounter target={totalChannels} /></div>
             <div style={{ color:"var(--text2)",fontSize:11,marginTop:4,fontWeight:600,textTransform:"uppercase",letterSpacing:.5 }}>канала</div>
           </div>
         </div>
@@ -347,7 +368,6 @@ export default function App() {
 
       <Marquee items={marqueeItems} />
 
-      {/* PORTFOLIO */}
       <section id="portfolio-section" style={{ padding:"96px 20px",maxWidth:1120,margin:"0 auto",position:"relative",zIndex:1 }}>
         <SectionTitle sub="Избранные проекты из нашего портфолио">Портфолио</SectionTitle>
         {[{key:"reels",label:"Reels & Shorts",desc:"Вертикальные форматы для соц. сетей"},{key:"motion",label:"Моушн-графика",desc:"Анимация и визуальные эффекты"},{key:"youtube",label:"YouTube",desc:"Полноформатный монтаж"}].map(({key,label,desc}) => (
@@ -373,7 +393,6 @@ export default function App() {
         ))}
       </section>
 
-      {/* CHANNELS */}
       <section id="channels-section" style={{ padding:"96px 20px",maxWidth:1120,margin:"0 auto",position:"relative",zIndex:1 }}>
         <SectionTitle sub="Реальные результаты каналов после работы с нами">Результаты</SectionTitle>
         {channels.map((ch,idx) => (
@@ -399,7 +418,6 @@ export default function App() {
         ))}
       </section>
 
-      {/* REVIEWS */}
       <section id="reviews-section" style={{ padding:"96px 20px",maxWidth:900,margin:"0 auto",position:"relative",zIndex:1 }}>
         <SectionTitle sub="Что говорят клиенты о нашей работе">Отзывы</SectionTitle>
         <div className="glass" style={{ borderRadius:"var(--radius)",padding:28,marginBottom:40,border:"1px solid rgba(255,255,255,.04)" }}>
@@ -422,36 +440,48 @@ export default function App() {
         </div>
       </section>
 
-      {/* CONTACTS */}
       <section id="contacts-section" style={{ padding:"96px 20px 120px",maxWidth:760,margin:"0 auto",position:"relative",zIndex:1 }}>
         <SectionTitle sub="Готовы обсудить ваш проект — напишите нам">Контакты</SectionTitle>
         <div style={{ display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(280px,1fr))",gap:18,marginBottom:40 }}>
           <a href={`https://t.me/${(contacts.telegram||"").replace("@","")}`} target="_blank" rel="noopener noreferrer" style={{ textDecoration:"none" }}>
-            <div style={{ background:"linear-gradient(135deg,rgba(42,171,238,.08),rgba(42,171,238,.03))",borderRadius:"var(--radius)",padding:"32px 28px",border:"1px solid rgba(42,171,238,.18)",cursor:"pointer",transition:"transform .3s,box-shadow .3s,border-color .3s" }} onMouseEnter={e=>{e.currentTarget.style.transform="translateY(-6px)";e.currentTarget.style.boxShadow="0 20px 50px rgba(42,171,238,.15)";e.currentTarget.style.borderColor="rgba(42,171,238,.4)";}} onMouseLeave={e=>{e.currentTarget.style.transform="translateY(0)";e.currentTarget.style.boxShadow="none";e.currentTarget.style.borderColor="rgba(42,171,238,.18)";}}>
-              <div style={{ display:"flex",alignItems:"center",gap:14,marginBottom:14 }}>
-                <div style={{ width:50,height:50,borderRadius:14,background:"rgba(42,171,238,.15)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24 }}>✈</div>
-                <div><p style={{ fontSize:11,fontWeight:700,textTransform:"uppercase",letterSpacing:1,color:"#2aabee",marginBottom:3 }}>Telegram</p><p style={{ fontFamily:"'Unbounded',sans-serif",fontSize:16,fontWeight:600 }}>{contacts.telegram||"@yourstudio"}</p></div>
+            <div style={{ background:"linear-gradient(135deg,rgba(42,171,238,.08),rgba(42,171,238,.02))",borderRadius:"var(--radius)",padding:"32px 28px",border:"1px solid rgba(42,171,238,.18)",backdropFilter:"blur(12px)",cursor:"pointer",transition:"transform .35s cubic-bezier(.4,0,.2,1),box-shadow .35s,border-color .35s",position:"relative",overflow:"hidden" }}
+              onMouseEnter={e=>{e.currentTarget.style.transform="translateY(-6px)";e.currentTarget.style.boxShadow="0 20px 50px rgba(42,171,238,.2)";e.currentTarget.style.borderColor="rgba(42,171,238,.4)";}}
+              onMouseLeave={e=>{e.currentTarget.style.transform="translateY(0)";e.currentTarget.style.boxShadow="none";e.currentTarget.style.borderColor="rgba(42,171,238,.18)";}}
+            >
+              <div style={{ position:"absolute",top:"-20%",right:"-10%",width:120,height:120,borderRadius:"50%",background:"rgba(42,171,238,.06)",filter:"blur(30px)",pointerEvents:"none" }} />
+              <div style={{ display:"flex",alignItems:"center",gap:16,marginBottom:16,position:"relative",zIndex:1 }}>
+                <span style={{ fontSize:28 }}>✈️</span>
+                <div>
+                  <p style={{ fontSize:11,fontWeight:700,textTransform:"uppercase",letterSpacing:1.2,color:"#2aabee",marginBottom:4 }}>Telegram</p>
+                  <p style={{ fontFamily:"'Unbounded',sans-serif",fontSize:16,fontWeight:600,color:"#fff" }}>{contacts.telegram||"@yourstudio"}</p>
+                </div>
               </div>
-              <p style={{ fontSize:13,color:"var(--text2)",lineHeight:1.6 }}>Отвечаем быстро. Напишите нам для быстрой связи.</p>
+              <p style={{ fontSize:13,color:"var(--text2)",lineHeight:1.6,position:"relative",zIndex:1 }}>Отвечаем быстро. Напишите нам для быстрой связи.</p>
             </div>
           </a>
           <a href={`mailto:${contacts.email||"hello@studio.com"}`} style={{ textDecoration:"none" }}>
-            <div style={{ background:"linear-gradient(135deg,rgba(124,106,245,.08),rgba(124,106,245,.03))",borderRadius:"var(--radius)",padding:"32px 28px",border:"1px solid rgba(124,106,245,.18)",cursor:"pointer",transition:"transform .3s,box-shadow .3s,border-color .3s" }} onMouseEnter={e=>{e.currentTarget.style.transform="translateY(-6px)";e.currentTarget.style.boxShadow="0 20px 50px rgba(124,106,245,.15)";e.currentTarget.style.borderColor="rgba(124,106,245,.4)";}} onMouseLeave={e=>{e.currentTarget.style.transform="translateY(0)";e.currentTarget.style.boxShadow="none";e.currentTarget.style.borderColor="rgba(124,106,245,.18)";}}>
-              <div style={{ display:"flex",alignItems:"center",gap:14,marginBottom:14 }}>
-                <div style={{ width:50,height:50,borderRadius:14,background:"rgba(124,106,245,.15)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24 }}>✉</div>
-                <div><p style={{ fontSize:11,fontWeight:700,textTransform:"uppercase",letterSpacing:1,color:"var(--accent2)",marginBottom:3 }}>Email</p><p style={{ fontFamily:"'Unbounded',sans-serif",fontSize:14,fontWeight:600,wordBreak:"break-all" }}>{contacts.email||"hello@studio.com"}</p></div>
+            <div style={{ background:"linear-gradient(135deg,rgba(124,106,245,.08),rgba(124,106,245,.02))",borderRadius:"var(--radius)",padding:"32px 28px",border:"1px solid rgba(124,106,245,.18)",backdropFilter:"blur(12px)",cursor:"pointer",transition:"transform .35s cubic-bezier(.4,0,.2,1),box-shadow .35s,border-color .35s",position:"relative",overflow:"hidden" }}
+              onMouseEnter={e=>{e.currentTarget.style.transform="translateY(-6px)";e.currentTarget.style.boxShadow="0 20px 50px rgba(124,106,245,.2)";e.currentTarget.style.borderColor="rgba(124,106,245,.4)";}}
+              onMouseLeave={e=>{e.currentTarget.style.transform="translateY(0)";e.currentTarget.style.boxShadow="none";e.currentTarget.style.borderColor="rgba(124,106,245,.18)";}}
+            >
+              <div style={{ position:"absolute",bottom:"-20%",left:"-10%",width:130,height:130,borderRadius:"50%",background:"rgba(124,106,245,.06)",filter:"blur(30px)",pointerEvents:"none" }} />
+              <div style={{ display:"flex",alignItems:"center",gap:16,marginBottom:16,position:"relative",zIndex:1 }}>
+                <span style={{ fontSize:28 }}>📧</span>
+                <div>
+                  <p style={{ fontSize:11,fontWeight:700,textTransform:"uppercase",letterSpacing:1.2,color:"var(--accent2)",marginBottom:4 }}>Email</p>
+                  <p style={{ fontFamily:"'Unbounded',sans-serif",fontSize:14,fontWeight:600,color:"#fff",wordBreak:"break-all" }}>{contacts.email||"hello@studio.com"}</p>
+                </div>
               </div>
-              <p style={{ fontSize:13,color:"var(--text2)",lineHeight:1.6 }}>Для детального брифа и обсуждения пишите на почту.</p>
+              <p style={{ fontSize:13,color:"var(--text2)",lineHeight:1.6,position:"relative",zIndex:1 }}>Для детального брифа и обсуждения пишите на почту.</p>
             </div>
           </a>
         </div>
         <div style={{ display:"flex",gap:14,justifyContent:"center",flexWrap:"wrap" }}>
-          <Btn variant="tg" onClick={()=>window.open(`https://t.me/${(contacts.telegram||"").replace("@","")}`,`_blank`)} style={{ fontSize:14,padding:"16px 36px" }}>Написать в Telegram</Btn>
-          <Btn variant="mail" onClick={()=>window.location.href=`mailto:${contacts.email||"hello@studio.com"}`} style={{ fontSize:14,padding:"16px 36px" }}>Написать на Email</Btn>
+          <Btn variant="tg" onClick={()=>window.open(`https://t.me/${(contacts.telegram||"").replace("@","")}`,`_blank`)} style={{ fontSize:14,padding:"16px 36px" }}>✈️ Написать в Telegram</Btn>
+          <Btn variant="mail" onClick={()=>window.location.href=`mailto:${contacts.email||"hello@studio.com"}`} style={{ fontSize:14,padding:"16px 36px" }}>📧 Написать на Email</Btn>
         </div>
       </section>
 
-      {/* FOOTER */}
       <footer style={{ borderTop:"1px solid var(--border)",padding:"24px 28px",display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:12,position:"relative",zIndex:1 }}>
         <span style={{ fontFamily:"'Unbounded',sans-serif",fontSize:13,fontWeight:700 }}><span className="gradient-text">{siteName}</span></span>
         <span style={{ fontSize:12,color:"var(--text2)" }}>© {new Date().getFullYear()} — Монтаж видео</span>

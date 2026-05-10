@@ -701,7 +701,7 @@ export default function App() {
         <SectionTitle sub="Избранные проекты из нашего портфолио">Портфолио</SectionTitle>
 
         {[
-          { key: "reels", label: "Reels & Shorts", desc: "Вертикальные форматы для соц. сетей", num: "01" },
+          { key: "reels", label: "Reels & Shorts", desc: "Вертикальные форматы для негров ебаных и соц. сетей", num: "01" },
           { key: "motion", label: "Моушн-графика", desc: "Анимация и визуальные эффекты", num: "02" },
           { key: "youtube", label: "YouTube", desc: "Полноформатный монтаж", num: "03" },
         ].map(({ key, label, desc, num }) => (

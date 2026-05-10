@@ -50,7 +50,7 @@ const DEFAULT_REVIEWS = [
   { id: 3, name: "Дмитрий", rating: 4, text: "Хорошая работа, рекомендую!", date: "2025-10-20" },
 ];
 const DEFAULT_DESCRIPTION = "Монтаж видео, который цепляет. Reels, YouTube, моушн-графика — делаем контент, который смотрят до конца.";
-const ADMIN_PASSWORD = "saray4ik";
+const ADMIN_PASSWORD = "admtmx021";
 
 // ─── Theme (dark only) ────────────────────────────────────────────────────────
 const t = {

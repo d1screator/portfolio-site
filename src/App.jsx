@@ -5,6 +5,7 @@ import { getFirestore, doc, getDoc, setDoc, onSnapshot } from "firebase/firestor
 import { getAnalytics } from "firebase/analytics";
 import { createClient } from "@supabase/supabase-js";
 
+// ─── Firebase & Supabase конфигурация (оставлено без изменений) ────────────────
 const firebaseConfig = {
   apiKey: "AIzaSyBje6u4E1S5p1206S1S-v2WgHnn1pj93j8",
   authDomain: "portfolio-site-2e586.firebaseapp.com",
@@ -34,6 +35,7 @@ const uploadFile = async (file, folder = "uploads") => {
   return urlData.publicUrl;
 };
 
+// ─── Данные по умолчанию ───────────────────────────────────────────────────────
 const DEFAULT_WORKS = {
   reels: [{ id: 1, title: "Reels #1", video: "", price: "5 000 ₽" }, { id: 2, title: "Reels #2", video: "", price: "5 000 ₽" }, { id: 3, title: "Reels #3", video: "", price: "5 000 ₽" }, { id: 4, title: "Reels #4", video: "", price: "5 000 ₽" }, { id: 5, title: "Reels #5", video: "", price: "5 000 ₽" }],
   motion: [{ id: 1, title: "Motion #1", video: "", price: "10 000 ₽" }, { id: 2, title: "Motion #2", video: "", price: "10 000 ₽" }, { id: 3, title: "Motion #3", video: "", price: "10 000 ₽" }, { id: 4, title: "Motion #4", video: "", price: "10 000 ₽" }, { id: 5, title: "Motion #5", video: "", price: "10 000 ₽" }],
@@ -52,7 +54,7 @@ const DEFAULT_REVIEWS = [
 const DEFAULT_DESCRIPTION = "Монтаж видео, который цепляет. Reels, YouTube, моушн-графика — делаем контент, который смотрят до конца.";
 const ADMIN_PASSWORD = "admin123";
 
-// ─── Theme (dark only) ────────────────────────────────────────────────────────
+// ─── Тема ──────────────────────────────────────────────────────────────────────
 const t = {
   bg: "#050507",
   bgSecondary: "#0a0a0f",
@@ -75,7 +77,7 @@ const t = {
   reviewDate: "rgba(240,240,245,0.3)",
 };
 
-// ─── Global Styles ────────────────────────────────────────────────────────────
+// ─── Глобальные стили и анимации ───────────────────────────────────────────────
 const globalStyles = `
 @import url('https://fonts.googleapis.com/css2?family=Unbounded:wght@300;400;500;600;700;800;900&family=Manrope:wght@300;400;500;600;700;800&family=DM+Serif+Display:ital@0;1&display=swap');
 *{margin:0;padding:0;box-sizing:border-box}
@@ -92,7 +94,7 @@ body::after{
   inset:0;
   pointer-events:none;
   z-index:9999;
-  opacity:.035;
+  opacity:.025;
   background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
   background-repeat:repeat;
   background-size:128px 128px;
@@ -105,10 +107,13 @@ body::after{
 @keyframes pulse{0%,100%{opacity:.2}50%{opacity:.7}}
 @keyframes rotate{from{transform:rotate(0)}to{transform:rotate(360deg)}}
 @keyframes marquee{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+@keyframes marqueeReverse{from{transform:translateX(-50%)}to{transform:translateX(0)}}
 @keyframes moveOrb1{0%{transform:translate(0,0) scale(1)}50%{transform:translate(8vw,12vh) scale(1.15)}100%{transform:translate(0,0) scale(1)}}
 @keyframes moveOrb2{0%{transform:translate(0,0) scale(1)}50%{transform:translate(-8vw,-8vh) scale(0.9)}100%{transform:translate(0,0) scale(1)}}
 @keyframes shimmer{0%{opacity:.4}50%{opacity:.9}100%{opacity:.4}}
 @keyframes lineGrow{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+.anim-hidden{opacity:0;transform:translateY(40px)}
+.anim-visible{animation:fadeUp .8s cubic-bezier(.16,1,.3,1) both}
 .anim-fade-up{animation:fadeUp .8s cubic-bezier(.16,1,.3,1) both}
 .anim-scale-in{animation:scaleIn .7s cubic-bezier(.16,1,.3,1) both}
 .anim-slide-down{animation:slideDown .45s cubic-bezier(.16,1,.3,1) both}
@@ -136,10 +141,10 @@ body::after{
 ::-webkit-scrollbar-thumb{background:${t.scrollbar};border-radius:2px}
 input,textarea,select{font-family:'Manrope',sans-serif}
 #scroll-progress{
-  position:fixed;top:0;left:0;height:1.5px;
-  background:${t.text};
+  position:fixed;top:0;left:0;height:2px;
+  background:linear-gradient(90deg,transparent,${t.text},transparent);
   z-index:10000;transition:width .1s linear;
-  box-shadow:0 0 12px rgba(255,255,255,0.6);
+  box-shadow:0 0 20px rgba(255,255,255,0.5), 0 0 40px rgba(255,255,255,0.2);
 }
 .bg-orb{position:fixed;border-radius:50%;filter:blur(100px);pointer-events:none;z-index:0}
 .decor-text{
@@ -172,9 +177,40 @@ input,textarea,select{font-family:'Manrope',sans-serif}
   transform-origin:left;
   animation:lineGrow 1.2s cubic-bezier(.16,1,.3,1) both;
 }
+/* Мобильные стили */
+.mobile-only{display:none !important}
+.desktop-only{display:block}
+@media (max-width: 768px){
+  .mobile-only{display:block !important}
+  .desktop-only{display:none !important}
+  .nav-links{display:none !important}
+}
 `;
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+// ─── Вспомогательные компоненты ─────────────────────────────────────────────────
+
+/** Компонент, который анимирует появление при скролле */
+const AnimBlock = ({ children, style: s = {}, delay = 0, className = "" }) => {
+  const ref = useRef(null);
+  const [visible, setVisible] = useState(false);
+  useEffect(() => {
+    const obs = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting) {
+        setVisible(true);
+        obs.unobserve(entry.target);
+      }
+    }, { threshold: 0.15 });
+    if (ref.current) obs.observe(ref.current);
+    return () => obs.disconnect();
+  }, []);
+  return (
+    <div ref={ref} className={`${visible ? 'anim-visible' : 'anim-hidden'} ${className}`}
+      style={{ animationDelay: `${delay}ms`, ...s }}>
+      {children}
+    </div>
+  );
+};
+
 const ScrollProgress = () => {
   const [width, setWidth] = useState(0);
   useEffect(() => {
@@ -236,6 +272,7 @@ const Btn = ({ children, onClick, variant = "primary", style: s = {}, disabled =
     transition: "all .35s cubic-bezier(.4,0,.2,1)",
     letterSpacing: ".06em", opacity: disabled ? .4 : 1,
     textTransform: "uppercase",
+    position: "relative", overflow: "hidden",
   };
   const vars = {
     primary: {
@@ -259,26 +296,35 @@ const Btn = ({ children, onClick, variant = "primary", style: s = {}, disabled =
       color: t.text, borderColor: t.borderStrong,
     },
   };
+  const activeGlow = variant === 'primary' ? '0 0 30px rgba(255,255,255,0.3)' : '0 0 25px rgba(255,255,255,0.1)';
   return (
     <button onClick={disabled ? undefined : onClick} style={{ ...base, ...vars[variant], ...s }}
-      onMouseEnter={e => { if (disabled) return; e.currentTarget.style.transform = "translateY(-3px) scale(1.02)"; e.currentTarget.style.boxShadow = "0 12px 40px rgba(255,255,255,0.15)"; }}
+      onMouseEnter={e => { if (disabled) return; e.currentTarget.style.transform = "translateY(-3px) scale(1.02)"; e.currentTarget.style.boxShadow = activeGlow; }}
       onMouseLeave={e => { if (disabled) return; e.currentTarget.style.transform = ""; e.currentTarget.style.boxShadow = vars[variant].boxShadow || ""; }}
+      onMouseDown={e => { if (disabled) return; e.currentTarget.style.transform = "scale(0.97)"; }}
+      onMouseUp={e => { if (disabled) return; e.currentTarget.style.transform = "translateY(-3px) scale(1.02)"; }}
     >{children}</button>
   );
 };
 
-const Marquee = ({ items }) => {
+const MarqueeRow = ({ items, speed = "28s", direction = "normal" }) => {
   const doubled = [...items, ...items];
   return (
-    <div style={{ overflow: "hidden", borderTop: `1px solid ${t.border}`, borderBottom: `1px solid ${t.border}`, padding: "12px 0" }}>
-      <div style={{ display: "flex", width: "max-content", animation: "marquee 28s linear infinite" }}>
+    <div style={{ overflow: "hidden", borderTop: `1px solid ${t.border}`, borderBottom: `1px solid ${t.border}`, padding: "8px 0", position: "relative" }}>
+      <div style={{
+        display: "flex", width: "max-content",
+        animation: direction === 'reverse' ? `marqueeReverse ${speed} linear infinite` : `marquee ${speed} linear infinite`
+      }}>
         {doubled.map((item, i) => (
-          <span key={i} style={{ display: "inline-flex", alignItems: "center", gap: 12, padding: "0 40px", fontFamily: "'Unbounded',sans-serif", fontSize: 10, fontWeight: 500, color: t.textMuted, whiteSpace: "nowrap", textTransform: "uppercase", letterSpacing: "2px" }}>
+          <span key={i} style={{ display: "inline-flex", alignItems: "center", gap: 12, padding: "0 40px", fontFamily: "'Unbounded',sans-serif", fontSize: 9, fontWeight: 500, color: t.textMuted, whiteSpace: "nowrap", textTransform: "uppercase", letterSpacing: "2px" }}>
             <span style={{ width: 3, height: 3, borderRadius: "50%", background: t.textMuted, display: "inline-block" }} />
             {item}
           </span>
         ))}
       </div>
+      {/* Размытие по краям */}
+      <div style={{ position: "absolute", top: 0, bottom: 0, left: 0, width: 120, background: `linear-gradient(90deg, ${t.bg} 0%, transparent 100%)`, pointerEvents: "none" }} />
+      <div style={{ position: "absolute", top: 0, bottom: 0, right: 0, width: 120, background: `linear-gradient(270deg, ${t.bg} 0%, transparent 100%)`, pointerEvents: "none" }} />
     </div>
   );
 };
@@ -331,6 +377,31 @@ const Cross = ({ style: s = {} }) => (
   <div style={{ position: "absolute", fontSize: 18, color: t.textMuted, lineHeight: 1, userSelect: "none", ...s }}>+</div>
 );
 
+/** Компонент с эффектом 3D-наведения (tilt) */
+const TiltCard = ({ children, className = "", style: s = {} }) => {
+  const ref = useRef(null);
+  const [transform, setTransform] = useState("");
+  const handleMouseMove = (e) => {
+    const rect = ref.current?.getBoundingClientRect();
+    if (!rect) return;
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    const centerX = rect.width / 2;
+    const centerY = rect.height / 2;
+    const rotateX = ((y - centerY) / centerY) * -8;
+    const rotateY = ((x - centerX) / centerX) * 8;
+    setTransform(`perspective(800px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.02,1.02,1.02)`);
+  };
+  const handleMouseLeave = () => setTransform("");
+  return (
+    <div ref={ref} className={className} style={{ ...s, transition: "transform .2s ease-out", transform }}
+      onMouseMove={handleMouseMove} onMouseLeave={handleMouseLeave}>
+      {children}
+    </div>
+  );
+};
+
+// ─── Основной компонент приложения ─────────────────────────────────────────────
 export default function App() {
   const [loaded, setLoaded] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
@@ -351,6 +422,7 @@ export default function App() {
   const [adminTab, setAdminTab] = useState("works");
   const [customWorks, setCustomWorks] = useState(null);
   const [customChannels, setCustomChannels] = useState(null);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -408,7 +480,7 @@ export default function App() {
   const inputStyle = makeInputStyle();
   const labelStyle = makeLabelStyle();
 
-  // ─── Loading ──────────────────────────────────────────────────────────────────
+  // ─── Загрузка ──────────────────────────────────────────────────────────────────
   if (!loaded) return (
     <div style={{ background: t.bg, minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 20 }}>
       <style>{globalStyles}</style>
@@ -417,7 +489,7 @@ export default function App() {
     </div>
   );
 
-  // ─── Admin Panel ──────────────────────────────────────────────────────────────
+  // ─── Админ-панель ──────────────────────────────────────────────────────────────
   if (isAdmin) return (
     <div style={{ background: t.bg, minHeight: "100vh", padding: "30px 20px" }}>
       <style>{globalStyles}</style>
@@ -547,19 +619,20 @@ export default function App() {
     </div>
   );
 
-  // ─── Main Site ────────────────────────────────────────────────────────────────
+  // ─── Основной сайт ─────────────────────────────────────────────────────────────
   const marqueeItems = ["Монтаж видео", "Reels & Shorts", "YouTube-ролики", "Моушн-графика", "Цветокоррекция", "Звуковой дизайн", "Анимация", "Шоурилы"];
+  const marqueeItems2 = ["Креатив", "Динамика", "Качество 4K", "Сценарий", "Продвижение", "Контент-план"];
 
   return (
     <div style={{ background: t.bg, minHeight: "100vh", position: "relative", overflow: "hidden" }}>
       <style>{globalStyles}</style>
       <ScrollProgress />
 
-      {/* Background orbs */}
+      {/* Фоновые орбы */}
       <div className="bg-orb" style={{ width: "55vw", height: "55vw", maxWidth: 700, maxHeight: 700, background: `radial-gradient(circle, ${t.orb1} 0%, transparent 70%)`, top: "-10%", right: "-10%", animation: "moveOrb1 20s ease-in-out infinite" }} />
       <div className="bg-orb" style={{ width: "45vw", height: "45vw", maxWidth: 600, maxHeight: 600, background: `radial-gradient(circle, ${t.orb2} 0%, transparent 70%)`, bottom: "5%", left: "-8%", animation: "moveOrb2 24s ease-in-out infinite" }} />
 
-      {/* ── NAV ── */}
+      {/* ── НАВИГАЦИЯ ── */}
       <nav style={{
         position: "fixed", top: 0, left: 0, right: 0, zIndex: 1000,
         padding: "0 32px", height: 64,
@@ -575,7 +648,9 @@ export default function App() {
             : siteName
           }
         </div>
-        <div style={{ display: "flex", gap: 2 }}>
+
+        {/* Десктопные ссылки */}
+        <div className="desktop-only nav-links" style={{ display: "flex", gap: 2 }}>
           {[["portfolio-section", "Работы"], ["channels-section", "Результаты"], ["reviews-section", "Отзывы"], ["contacts-section", "Контакты"]].map(([id, label]) => (
             <button key={id} onClick={() => scrollTo(id)} style={{
               padding: "8px 16px", borderRadius: 50, border: "none", background: "transparent",
@@ -587,8 +662,36 @@ export default function App() {
             >{label}</button>
           ))}
         </div>
-        <Btn onClick={() => scrollTo("contacts-section")} style={{ padding: "9px 22px", fontSize: 11 }}>Заказать</Btn>
+
+        <div className="desktop-only">
+          <Btn onClick={() => scrollTo("contacts-section")} style={{ padding: "9px 22px", fontSize: 11 }}>Заказать</Btn>
+        </div>
+
+        {/* Мобильная кнопка */}
+        <button className="mobile-only" onClick={() => setMobileMenuOpen(true)} style={{
+          background: "transparent", border: "none", color: t.text, fontSize: 28,
+          cursor: "pointer", padding: 8, lineHeight: 1,
+        }}>☰</button>
       </nav>
+
+      {/* Мобильное меню */}
+      {mobileMenuOpen && (
+        <div style={{ position: "fixed", inset: 0, zIndex: 2001, background: "rgba(0,0,0,0.85)", backdropFilter: "blur(30px)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 32, animation: "fadeIn .3s" }}>
+          <button onClick={() => setMobileMenuOpen(false)} style={{ position: "absolute", top: 24, right: 32, background: "transparent", border: "none", color: t.text, fontSize: 32, cursor: "pointer" }}>✕</button>
+          {[["portfolio-section", "Работы"], ["channels-section", "Результаты"], ["reviews-section", "Отзывы"], ["contacts-section", "Контакты"]].map(([id, label]) => (
+            <button key={id} onClick={() => { scrollTo(id); setMobileMenuOpen(false); }} style={{
+              background: "transparent", border: "none", color: t.textSecondary, fontSize: 24, fontWeight: 600,
+              fontFamily: "'Unbounded',sans-serif", cursor: "pointer",
+              padding: "12px 24px", borderRadius: 50, transition: "all .3s",
+              letterSpacing: 1,
+            }}
+              onMouseEnter={e => e.currentTarget.style.color = t.text}
+              onMouseLeave={e => e.currentTarget.style.color = t.textSecondary}
+            >{label}</button>
+          ))}
+          <Btn onClick={() => { scrollTo("contacts-section"); setMobileMenuOpen(false); }} style={{ padding: "16px 36px", fontSize: 14, marginTop: 20 }}>Заказать</Btn>
+        </div>
+      )}
 
       {/* ── HERO ── */}
       <section style={{
@@ -596,19 +699,16 @@ export default function App() {
         alignItems: "center", justifyContent: "center",
         padding: "120px 20px 100px", position: "relative", zIndex: 1, textAlign: "center",
       }}>
-        {/* Giant decorative background text */}
         <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -55%)", zIndex: 0, overflow: "hidden", width: "100%", textAlign: "center" }}>
           <div className="decor-text">{siteName}</div>
         </div>
 
         <GridLines />
-
         <Cross style={{ top: "18%", left: "12%" }} />
         <Cross style={{ top: "18%", right: "12%" }} />
         <Cross style={{ bottom: "22%", left: "8%" }} />
         <Cross style={{ bottom: "22%", right: "8%" }} />
 
-        {/* Logo avatar */}
         <div className="anim-scale-in" style={{ position: "relative", zIndex: 2, marginBottom: 32 }}>
           <div style={{
             width: 96, height: 96, borderRadius: "50%",
@@ -620,7 +720,6 @@ export default function App() {
             boxShadow: "0 0 60px rgba(255,255,255,0.06), 0 0 120px rgba(255,255,255,0.03)",
             backdropFilter: "blur(12px)",
           }}>{!logoUrl && siteName[0]}</div>
-          {/* Orbit ring */}
           <div style={{ position: "absolute", inset: -8, borderRadius: "50%", border: `1px solid ${t.border}`, animation: "rotate 12s linear infinite" }} />
           <div style={{ position: "absolute", inset: -16, borderRadius: "50%", border: `1px dashed ${t.border}`, animation: "rotate 20s linear infinite reverse", opacity: .5 }} />
         </div>
@@ -652,12 +751,10 @@ export default function App() {
           position: "relative", zIndex: 2,
         }}>{siteDescription}</p>
 
-        {/* Stats */}
-        <div className="anim-fade-up glass" style={{
-          animationDelay: ".28s",
+        {/* Статистика */}
+        <AnimBlock className="glass" style={{
           display: "flex", gap: 0, marginBottom: 44,
-          borderRadius: 20, overflow: "hidden",
-          position: "relative", zIndex: 2,
+          borderRadius: 20, overflow: "hidden", zIndex: 2,
         }}>
           {[
             { value: avgRating, sub: `${reviews.length} отзывов`, star: true },
@@ -672,14 +769,13 @@ export default function App() {
               <div style={{ color: t.textMuted, fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1.5 }}>{stat.sub}</div>
             </div>
           ))}
-        </div>
+        </AnimBlock>
 
         <div className="anim-fade-up" style={{ animationDelay: ".35s", display: "flex", gap: 12, flexWrap: "wrap", justifyContent: "center", position: "relative", zIndex: 2 }}>
           <Btn onClick={() => scrollTo("portfolio-section")}>Смотреть работы</Btn>
           <Btn variant="secondary" onClick={() => scrollTo("contacts-section")}>Написать нам</Btn>
         </div>
 
-        {/* Scroll indicator */}
         <div style={{ position: "absolute", bottom: 36, left: "50%", transform: "translateX(-50%)", animation: "float 2.5s ease-in-out infinite", zIndex: 2 }}>
           <div style={{ width: 24, height: 38, borderRadius: 12, border: `1px solid ${t.border}`, display: "flex", justifyContent: "center", paddingTop: 8 }}>
             <div style={{ width: 1.5, height: 8, borderRadius: 1, background: t.textMuted, animation: "pulse 1.5s ease-in-out infinite" }} />
@@ -689,10 +785,11 @@ export default function App() {
 
       {/* ── MARQUEE ── */}
       <div style={{ position: "relative", zIndex: 1 }}>
-        <Marquee items={marqueeItems} />
+        <MarqueeRow items={marqueeItems} speed="22s" />
+        <MarqueeRow items={marqueeItems2} speed="28s" direction="reverse" />
       </div>
 
-      {/* ── PORTFOLIO ── */}
+      {/* ── ПОРТФОЛИО ── */}
       <section id="portfolio-section" style={{ padding: "112px 20px", maxWidth: 1200, margin: "0 auto", position: "relative", zIndex: 1 }}>
         <div style={{ position: "absolute", top: 60, right: -20, pointerEvents: "none", overflow: "hidden" }}>
           <div style={{ fontFamily: "'Unbounded',sans-serif", fontSize: "clamp(4rem,10vw,9rem)", fontWeight: 900, color: t.decorText, letterSpacing: "-.05em", lineHeight: 1, userSelect: "none", whiteSpace: "nowrap" }}>WORK</div>
@@ -706,40 +803,61 @@ export default function App() {
           { key: "youtube", label: "YouTube", desc: "Полноформатный монтаж", num: "03" },
         ].map(({ key, label, desc, num }) => (
           <div key={key} style={{ marginBottom: 80 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 20, marginBottom: 32, paddingBottom: 20, borderBottom: `1px solid ${t.border}` }}>
+            <AnimBlock style={{ display: "flex", alignItems: "center", gap: 20, marginBottom: 32, paddingBottom: 20, borderBottom: `1px solid ${t.border}` }}>
               <span style={{ fontFamily: "'Unbounded',sans-serif", fontSize: 11, color: t.textMuted, fontWeight: 400 }}>{num}</span>
               <h3 style={{ fontFamily: "'Unbounded',sans-serif", fontSize: 20, fontWeight: 800, color: t.text, letterSpacing: "-.03em" }}>{label}</h3>
               <span style={{ color: t.textMuted, fontSize: 13 }}>— {desc}</span>
-            </div>
+            </AnimBlock>
 
-            <div style={{ display: "grid", gridTemplateColumns: key === "youtube" ? "repeat(auto-fill,minmax(320px,1fr))" : "repeat(auto-fill,minmax(200px,1fr))", gap: 16 }}>
-              {works[key].map((item, i) => (
-                <div key={item.id} className="anim-fade-up card-hover glass" style={{ animationDelay: `${i * .08}s`, borderRadius: 16, overflow: "hidden", border: `1px solid ${t.border}` }}>
-                  <div style={{ aspectRatio: key === "youtube" ? "16/9" : "9/16", background: item.video ? "#000" : t.surface, display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", position: "relative" }}>
-                    {item.video
-                      ? <video src={item.video} style={{ width: "100%", height: "100%", objectFit: "cover" }} controls playsInline />
-                      : <>
-                          <div style={{ color: t.textMuted, fontSize: 11, textAlign: "center", padding: 20, position: "relative", zIndex: 1 }}>
-                            <div style={{ width: 40, height: 40, borderRadius: "50%", border: `1px solid ${t.border}`, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 12px", fontSize: 16 }}>▶</div>
-                            <span style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: 2, fontFamily: "'Unbounded',sans-serif" }}>Видео</span>
-                          </div>
-                          <div style={{ position: "absolute", top: 12, left: 12, width: 20, height: 20, borderTop: `1px solid ${t.border}`, borderLeft: `1px solid ${t.border}` }} />
-                          <div style={{ position: "absolute", bottom: 12, right: 12, width: 20, height: 20, borderBottom: `1px solid ${t.border}`, borderRight: `1px solid ${t.border}` }} />
-                        </>
-                    }
-                  </div>
-                  <div style={{ padding: "14px 18px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                    <span style={{ fontWeight: 700, fontSize: 13, color: t.text, fontFamily: "'Unbounded',sans-serif", letterSpacing: "-.02em" }}>{item.title}</span>
-                    {item.price && <span style={{ fontSize: 10, fontWeight: 700, background: t.surface, color: t.textSecondary, padding: "4px 10px", borderRadius: 20, whiteSpace: "nowrap", border: `1px solid ${t.border}`, fontFamily: "'Unbounded',sans-serif", letterSpacing: ".03em" }}>{item.price}</span>}
-                  </div>
-                </div>
-              ))}
+            {/* Bento grid: разное масштабирование карточек */}
+            <div style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+              gap: 16,
+              gridAutoRows: "minmax(200px, auto)",
+              gridAutoFlow: "dense",
+            }}>
+              {works[key].map((item, i) => {
+                const isLarge = (key === "reels" && i === 0) || (key === "motion" && i === 1) || (key === "youtube" && i === 0);
+                return (
+                  <AnimBlock key={item.id} className="card-hover glass" delay={i * 80} style={{
+                    borderRadius: 16,
+                    overflow: "hidden",
+                    border: `1px solid ${t.border}`,
+                    gridColumn: isLarge ? "span 2" : "span 1",
+                    gridRow: isLarge ? "span 2" : "span 1",
+                  }}>
+                    <div style={{
+                      aspectRatio: key === "youtube" ? "16/9" : "9/16",
+                      background: item.video ? "#000" : t.surface,
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      overflow: "hidden", position: "relative",
+                    }}>
+                      {item.video
+                        ? <video src={item.video} style={{ width: "100%", height: "100%", objectFit: "cover" }} controls playsInline />
+                        : <>
+                            <div style={{ color: t.textMuted, fontSize: 11, textAlign: "center", padding: 20, position: "relative", zIndex: 1 }}>
+                              <div style={{ width: 40, height: 40, borderRadius: "50%", border: `1px solid ${t.border}`, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 12px", fontSize: 16 }}>▶</div>
+                              <span style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: 2, fontFamily: "'Unbounded',sans-serif" }}>Видео</span>
+                            </div>
+                            <div style={{ position: "absolute", top: 12, left: 12, width: 20, height: 20, borderTop: `1px solid ${t.border}`, borderLeft: `1px solid ${t.border}` }} />
+                            <div style={{ position: "absolute", bottom: 12, right: 12, width: 20, height: 20, borderBottom: `1px solid ${t.border}`, borderRight: `1px solid ${t.border}` }} />
+                          </>
+                      }
+                    </div>
+                    <div style={{ padding: "14px 18px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                      <span style={{ fontWeight: 700, fontSize: 13, color: t.text, fontFamily: "'Unbounded',sans-serif", letterSpacing: "-.02em" }}>{item.title}</span>
+                      {item.price && <span style={{ fontSize: 10, fontWeight: 700, background: t.surface, color: t.textSecondary, padding: "4px 10px", borderRadius: 20, whiteSpace: "nowrap", border: `1px solid ${t.border}`, fontFamily: "'Unbounded',sans-serif", letterSpacing: ".03em" }}>{item.price}</span>}
+                    </div>
+                  </AnimBlock>
+                );
+              })}
             </div>
           </div>
         ))}
       </section>
 
-      {/* ── RESULTS ── */}
+      {/* ── РЕЗУЛЬТАТЫ ── */}
       <section id="channels-section" style={{ padding: "112px 20px", position: "relative", zIndex: 1, background: "rgba(255,255,255,0.015)", borderTop: `1px solid ${t.border}`, borderBottom: `1px solid ${t.border}` }}>
         <div style={{ maxWidth: 1120, margin: "0 auto" }}>
           <div style={{ position: "absolute", bottom: 40, left: -20, pointerEvents: "none", overflow: "hidden" }}>
@@ -749,9 +867,11 @@ export default function App() {
           <SectionTitle sub="Реальные результаты каналов после работы с нами">Результаты</SectionTitle>
 
           {channels.map((ch, idx) => (
-            <div key={ch.id} className="anim-fade-up glass" style={{ animationDelay: `${idx * .12}s`, borderRadius: 20, padding: "36px 32px", marginBottom: 24, border: `1px solid ${t.border}`, position: "relative", overflow: "hidden" }}>
+            <AnimBlock key={ch.id} className="glass" delay={idx * 120} style={{
+              borderRadius: 20, padding: "36px 32px", marginBottom: 24,
+              border: `1px solid ${t.border}`, position: "relative", overflow: "hidden",
+            }}>
               <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 1, background: `linear-gradient(90deg, transparent, ${t.borderStrong}, transparent)` }} />
-
               <h3 style={{ fontFamily: "'Unbounded',sans-serif", fontSize: 18, fontWeight: 800, marginBottom: 28, color: t.text, letterSpacing: "-.03em" }}>{ch.name}</h3>
 
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 32 }}>
@@ -782,7 +902,9 @@ export default function App() {
                       contentStyle={{ background: t.navBg, border: `1px solid ${t.border}`, borderRadius: 12, fontSize: 13, color: t.text, backdropFilter: "blur(20px)" }}
                       formatter={v => [v.toLocaleString(), "Просмотры"]}
                     />
-                    <Area type="monotone" dataKey="views" stroke="rgba(255,255,255,0.6)" strokeWidth={2} fill={`url(#grad-${ch.id})`} dot={{ r: 4, fill: t.text, stroke: t.bg, strokeWidth: 2 }} activeDot={{ r: 6 }} />
+                    <Area type="monotone" dataKey="views" stroke="#ffffff" strokeWidth={2} fill={`url(#grad-${ch.id})`}
+                      dot={{ r: 4, fill: t.text, stroke: t.bg, strokeWidth: 2, filter: "drop-shadow(0 0 6px rgba(255,255,255,0.7))" }}
+                      activeDot={{ r: 6, fill: "#fff", stroke: "#fff", strokeWidth: 2, filter: "drop-shadow(0 0 10px #fff)" }} />
                   </AreaChart>
                 </ResponsiveContainer>
               </div>
@@ -797,51 +919,59 @@ export default function App() {
                   ))}
                 </div>
               )}
-            </div>
+            </AnimBlock>
           ))}
         </div>
       </section>
 
-      {/* ── REVIEWS ── */}
+      {/* ── ОТЗЫВЫ ── */}
       <section id="reviews-section" style={{ padding: "112px 20px", maxWidth: 960, margin: "0 auto", position: "relative", zIndex: 1 }}>
         <SectionTitle sub="Что говорят клиенты о нашей работе">Отзывы</SectionTitle>
 
-        {/* Review form */}
-        <div className="glass" style={{ borderRadius: 20, padding: "32px 36px", marginBottom: 48, border: `1px solid ${t.border}`, position: "relative", overflow: "hidden" }}>
+        <AnimBlock className="glass" style={{ borderRadius: 20, padding: "32px 36px", marginBottom: 48, border: `1px solid ${t.border}`, position: "relative", overflow: "hidden" }}>
           <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 1, background: `linear-gradient(90deg, transparent, ${t.borderStrong}, transparent)` }} />
           <p style={{ fontFamily: "'Unbounded',sans-serif", fontSize: 11, color: t.textMuted, letterSpacing: 2, textTransform: "uppercase", marginBottom: 20 }}>Оставить отзыв</p>
           <div style={{ display: "flex", gap: 14, marginBottom: 14, flexWrap: "wrap", alignItems: "center" }}>
             <input placeholder="Ваше имя" value={reviewName} onChange={e => setReviewName(e.target.value)} style={{ ...makeInputStyle(), flex: 1, minWidth: 160 }} />
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
               <span style={{ fontSize: 12, color: t.textMuted, fontFamily: "'Unbounded',sans-serif", textTransform: "uppercase", letterSpacing: 1 }}>Оценка</span>
-              <Stars rating={reviewRating} onRate={setReviewRating} size={24} />
+              <Stars rating={reviewRating} onRate={setReviewRating} size={26} />
             </div>
           </div>
           <textarea placeholder="Напишите отзыв..." value={reviewText} onChange={e => setReviewText(e.target.value)} rows={3} style={{ ...makeInputStyle(), resize: "vertical", marginBottom: 18 }} />
           <Btn onClick={submitReview} disabled={saving} style={{ fontSize: 11, padding: "11px 28px" }}>{saving ? "Отправка..." : "Отправить"}</Btn>
-        </div>
+        </AnimBlock>
 
-        {/* Review grid */}
         <div style={{ display: "grid", gap: 14 }}>
           {reviews.map((r, i) => (
-            <div key={r.id} className="anim-fade-up card-hover glass" style={{ animationDelay: `${i * .06}s`, borderRadius: 18, padding: "24px 28px", border: `1px solid ${t.border}`, position: "relative", overflow: "hidden" }}>
+            <AnimBlock key={r.id} className="card-hover glass" delay={i * 60} style={{
+              borderRadius: 18, padding: "24px 28px", border: `1px solid ${t.border}`,
+              position: "relative", overflow: "hidden",
+            }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 14, gap: 12, flexWrap: "wrap" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-                  <div style={{ width: 40, height: 40, borderRadius: "50%", background: "rgba(255,255,255,0.08)", border: `1px solid ${t.border}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 15, fontWeight: 800, color: t.text, fontFamily: "'Unbounded',sans-serif", flexShrink: 0 }}>{r.name[0]?.toUpperCase()}</div>
+                  <div style={{
+                    width: 46, height: 46, borderRadius: "50%",
+                    background: "linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.02))",
+                    border: `1px solid ${t.border}`,
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    fontSize: 17, fontWeight: 800, color: t.text,
+                    fontFamily: "'Unbounded',sans-serif", flexShrink: 0,
+                  }}>{r.name[0]?.toUpperCase()}</div>
                   <div>
                     <span style={{ fontWeight: 700, fontSize: 14, color: t.text, fontFamily: "'Unbounded',sans-serif", letterSpacing: "-.02em" }}>{r.name}</span>
-                    <div style={{ marginTop: 4 }}><Stars rating={r.rating} size={13} /></div>
+                    <div style={{ marginTop: 4 }}><Stars rating={r.rating} size={14} /></div>
                   </div>
                 </div>
                 <span style={{ color: t.reviewDate, fontSize: 11, fontFamily: "'Manrope',sans-serif", flexShrink: 0 }}>{r.date}</span>
               </div>
               <p style={{ color: t.textSecondary, fontSize: 14, lineHeight: 1.8 }}>{r.text}</p>
-            </div>
+            </AnimBlock>
           ))}
         </div>
       </section>
 
-      {/* ── CONTACTS ── */}
+      {/* ── КОНТАКТЫ ── */}
       <section id="contacts-section" style={{ padding: "112px 20px 140px", maxWidth: 800, margin: "0 auto", position: "relative", zIndex: 1 }}>
         <div style={{ position: "absolute", top: 60, left: "50%", transform: "translateX(-50%)", pointerEvents: "none", overflow: "hidden", width: "120%", textAlign: "center" }}>
           <div style={{ fontFamily: "'Unbounded',sans-serif", fontSize: "clamp(4rem,12vw,11rem)", fontWeight: 900, color: t.decorText, letterSpacing: "-.05em", lineHeight: 1, userSelect: "none", whiteSpace: "nowrap" }}>CONTACT</div>
@@ -851,7 +981,7 @@ export default function App() {
 
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(300px,1fr))", gap: 16, marginBottom: 48, position: "relative", zIndex: 2 }}>
           <a href={`https://t.me/${(contacts.telegram || "").replace("@", "")}`} target="_blank" rel="noopener noreferrer" style={{ textDecoration: "none" }}>
-            <div className="glass card-hover" style={{ borderRadius: 20, padding: "32px 28px", border: `1px solid ${t.border}`, cursor: "pointer", position: "relative", overflow: "hidden" }}>
+            <TiltCard className="glass card-hover" style={{ borderRadius: 20, padding: "32px 28px", border: `1px solid ${t.border}`, cursor: "pointer", position: "relative", overflow: "hidden" }}>
               <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 1, background: "linear-gradient(90deg, transparent, rgba(42,171,238,0.4), transparent)" }} />
               <div style={{ display: "flex", alignItems: "center", gap: 18, marginBottom: 16 }}>
                 <div style={{ width: 48, height: 48, borderRadius: 14, background: "rgba(42,171,238,0.1)", border: "1px solid rgba(42,171,238,0.2)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22 }}>✈️</div>
@@ -862,11 +992,10 @@ export default function App() {
               </div>
               <p style={{ fontSize: 13, color: t.textSecondary, lineHeight: 1.7 }}>Отвечаем быстро. Напишите нам для быстрой связи.</p>
               <div style={{ position: "absolute", bottom: 20, right: 22, fontSize: 14, color: t.textMuted }}>↗</div>
-            </div>
+            </TiltCard>
           </a>
-
           <a href={`mailto:${contacts.email || "hello@studio.com"}`} style={{ textDecoration: "none" }}>
-            <div className="glass card-hover" style={{ borderRadius: 20, padding: "32px 28px", border: `1px solid ${t.border}`, cursor: "pointer", position: "relative", overflow: "hidden" }}>
+            <TiltCard className="glass card-hover" style={{ borderRadius: 20, padding: "32px 28px", border: `1px solid ${t.border}`, cursor: "pointer", position: "relative", overflow: "hidden" }}>
               <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 1, background: `linear-gradient(90deg, transparent, ${t.borderStrong}, transparent)` }} />
               <div style={{ display: "flex", alignItems: "center", gap: 18, marginBottom: 16 }}>
                 <div style={{ width: 48, height: 48, borderRadius: 14, background: t.surface, border: `1px solid ${t.border}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22 }}>📧</div>
@@ -877,24 +1006,28 @@ export default function App() {
               </div>
               <p style={{ fontSize: 13, color: t.textSecondary, lineHeight: 1.7 }}>Для детального брифа и обсуждения пишите на почту.</p>
               <div style={{ position: "absolute", bottom: 20, right: 22, fontSize: 14, color: t.textMuted }}>↗</div>
-            </div>
+            </TiltCard>
           </a>
         </div>
 
-        <div style={{ display: "flex", gap: 14, justifyContent: "center", flexWrap: "wrap", position: "relative", zIndex: 2 }}>
+        <AnimBlock style={{ display: "flex", gap: 14, justifyContent: "center", flexWrap: "wrap", position: "relative", zIndex: 2 }}>
           <Btn variant="tg" onClick={() => window.open(`https://t.me/${(contacts.telegram || "").replace("@", "")}`, "_blank")} style={{ fontSize: 12, padding: "16px 36px" }}>✈️ Написать в Telegram</Btn>
           <Btn variant="secondary" onClick={() => window.location.href = `mailto:${contacts.email || "hello@studio.com"}`} style={{ fontSize: 12, padding: "16px 36px" }}>📧 Написать на Email</Btn>
-        </div>
+        </AnimBlock>
       </section>
 
       {/* ── FOOTER ── */}
       <footer style={{ borderTop: `1px solid ${t.border}`, padding: "24px 40px", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12, position: "relative", zIndex: 1, background: "rgba(255,255,255,0.01)" }}>
         <span style={{ fontFamily: "'Unbounded',sans-serif", fontSize: 13, fontWeight: 800, color: t.text, letterSpacing: ".05em" }}>{siteName}</span>
         <span style={{ fontSize: 11, color: t.textMuted, fontFamily: "'Manrope',sans-serif" }}>© {new Date().getFullYear()} — Монтаж видео</span>
-        <button onClick={() => setShowPasswordModal(true)} style={{ background: "transparent", border: "none", color: t.textMuted, fontSize: 10, cursor: "pointer", fontFamily: "'Manrope',sans-serif", opacity: .3, transition: "opacity .3s" }}
-          onMouseEnter={e => e.currentTarget.style.opacity = "0.7"}
-          onMouseLeave={e => e.currentTarget.style.opacity = "0.3"}
-        >admin</button>
+        <button onClick={() => setShowPasswordModal(true)} style={{
+          background: "transparent", border: "none", color: t.textMuted, fontSize: 10, cursor: "pointer",
+          fontFamily: "'Manrope',sans-serif", opacity: .2, transition: "opacity .3s, color .3s",
+          width: 8, height: 8, borderRadius: "50%", background: t.textMuted, padding: 0,
+        }}
+          onMouseEnter={e => { e.currentTarget.style.opacity = "0.8"; e.currentTarget.style.background = "#fff"; }}
+          onMouseLeave={e => { e.currentTarget.style.opacity = "0.2"; e.currentTarget.style.background = t.textMuted; }}
+        ></button>
       </footer>
 
       {/* ── PASSWORD MODAL ── */}
